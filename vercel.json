@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/api/data/(.*)", "destination": "https://data-api.polymarket.com/$1" },
+    { "source": "/api/gamma/(.*)", "destination": "https://gamma-api.polymarket.com/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

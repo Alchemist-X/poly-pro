@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+
+# Local CSV / analysis files (user-private)
+*.csv
+*.pdf
+*.webarchive
+*.html
+!index.html
+
+# OS
+.DS_Store
+Thumbs.db
