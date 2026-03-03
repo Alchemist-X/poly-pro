@@ -102,11 +102,11 @@ const dict: Record<string, Record<Locale, string>> = {
   'section.expandAll': { zh: '全部展开', en: 'Expand All' },
   'section.collapseAll': { zh: '全部收起', en: 'Collapse All' },
 
-  'local.positions': { zh: '当前仓位', en: 'Current Positions' },
-  'local.settled': { zh: '已结算', en: 'Settled' },
-  'local.overview': { zh: '汇总概览', en: 'Overview' },
-  'local.table': { zh: '明细表格', en: 'Detail Table' },
-  'local.charts': { zh: '可视化分析', en: 'Visualizations' },
+  'nav.docs': { zh: '指标文档', en: 'Metrics Docs' },
+  'nav.back': { zh: '返回分析', en: 'Back to Analysis' },
+  'home.title': { zh: '分析任意 Polymarket Trader', en: 'Analyze Any Polymarket Trader' },
+  'home.subtitle': { zh: '输入用户名或钱包地址，查看完整的交易分析报告', en: 'Enter a username or wallet address for a full trading analysis report' },
+  'home.presets': { zh: '或者试试这些 Trader', en: 'Or try one of these traders' },
 }
 
 export interface I18nContextValue {
