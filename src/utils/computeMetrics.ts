@@ -300,6 +300,41 @@ export function computePriceBuckets(trades: Trade[]): PriceBucket[] {
   return buckets
 }
 
+export interface PnlByQuestionItem {
+  question: string
+  pnl: number
+  invested: number
+}
+
+export function computePnlByQuestion(positions: import('./polyApi').Position[], closedPositions: import('./polyApi').ClosedPosition[]): { profits: PnlByQuestionItem[]; losses: PnlByQuestionItem[] } {
+  const map = new Map<string, { pnl: number; invested: number }>()
+
+  for (const p of positions) {
+    const existing = map.get(p.title) ?? { pnl: 0, invested: 0 }
+    existing.pnl += p.cashPnl ?? 0
+    existing.invested += p.totalBought ?? 0
+    map.set(p.title, existing)
+  }
+
+  for (const p of closedPositions) {
+    const existing = map.get(p.title) ?? { pnl: 0, invested: 0 }
+    existing.pnl += p.realizedPnl
+    existing.invested += p.totalBought
+    map.set(p.title, existing)
+  }
+
+  const all = Array.from(map.entries()).map(([question, v]) => ({
+    question: question.length > 50 ? question.slice(0, 47) + '…' : question,
+    pnl: Math.round(v.pnl * 100) / 100,
+    invested: v.invested,
+  }))
+
+  const profits = all.filter(x => x.pnl > 0).sort((a, b) => b.pnl - a.pnl).slice(0, 15)
+  const losses = all.filter(x => x.pnl < 0).sort((a, b) => a.pnl - b.pnl).slice(0, 15)
+
+  return { profits, losses }
+}
+
 export interface ScatterPoint {
   conditionId: string
   title: string
@@ -336,4 +371,84 @@ export function computeTradeScatter(trades: Trade[]): ScatterPoint[] {
   }
 
   return points
+}
+
+export function computeFinishedFromTrades(
+  trades: Trade[],
+  apiClosed: ClosedPosition[],
+  activeConditionIds: Set<string>,
+): ClosedPosition[] {
+  const apiMap = new Map<string, ClosedPosition>()
+  for (const cp of apiClosed) apiMap.set(cp.conditionId, cp)
+
+  const byCondition = new Map<string, { buys: Trade[]; sells: Trade[] }>()
+  for (const t of trades) {
+    const entry = byCondition.get(t.conditionId) ?? { buys: [], sells: [] }
+    if (t.side === 'BUY') entry.buys.push(t)
+    else entry.sells.push(t)
+    byCondition.set(t.conditionId, entry)
+  }
+
+  const result: ClosedPosition[] = []
+
+  for (const [condId, { buys, sells }] of byCondition) {
+    if (activeConditionIds.has(condId)) continue
+    if (buys.length === 0) continue
+
+    if (apiMap.has(condId)) {
+      result.push(apiMap.get(condId)!)
+      apiMap.delete(condId)
+      continue
+    }
+
+    const totalBought = buys.reduce((s, t) => s + t.size * t.price, 0)
+    const totalBuyShares = buys.reduce((s, t) => s + t.size, 0)
+    const avgPrice = totalBuyShares > 0 ? totalBought / totalBuyShares : 0
+
+    let realizedPnl = 0
+    if (sells.length > 0) {
+      const totalSold = sells.reduce((s, t) => s + t.size * t.price, 0)
+      const lots = buys.map(t => ({ price: t.price, size: t.size }))
+      let remaining = sells.reduce((s, t) => s + t.size, 0)
+      let costConsumed = 0
+      for (const lot of lots) {
+        const used = Math.min(lot.size, remaining)
+        costConsumed += used * lot.price
+        remaining -= used
+        if (remaining <= 0) break
+      }
+      realizedPnl = totalSold - costConsumed
+    }
+
+    const latest = [...buys, ...sells].sort((a, b) => b.timestamp - a.timestamp)[0]
+    const first = buys[0]
+
+    result.push({
+      proxyWallet: first.proxyWallet,
+      asset: first.asset,
+      conditionId: condId,
+      avgPrice: Math.round(avgPrice * 10000) / 10000,
+      totalBought: Math.round(totalBought * 100) / 100,
+      realizedPnl: Math.round(realizedPnl * 100) / 100,
+      curPrice: sells.length > 0
+        ? sells.reduce((s, t) => s + t.price, 0) / sells.length
+        : latest.price,
+      title: first.title,
+      slug: first.slug,
+      icon: first.icon,
+      eventSlug: first.eventSlug,
+      outcome: first.outcome,
+      outcomeIndex: first.outcomeIndex,
+      endDate: '',
+      timestamp: latest.timestamp,
+    })
+  }
+
+  for (const cp of apiMap.values()) {
+    if (!activeConditionIds.has(cp.conditionId)) {
+      result.push(cp)
+    }
+  }
+
+  return result.sort((a, b) => b.totalBought - a.totalBought)
 }

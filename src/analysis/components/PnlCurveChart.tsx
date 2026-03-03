@@ -9,6 +9,7 @@ import {
   AreaChart,
 } from 'recharts'
 import type { PnlPoint } from '../../utils/computeMetrics'
+import { useI18n } from '../../i18n'
 
 interface Props {
   data: PnlPoint[]
@@ -20,22 +21,13 @@ function fmtY(v: number) {
   return `$${v.toFixed(0)}`
 }
 
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean
-  payload?: Array<{ value: number }>
-  label?: string
-}) => {
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
   if (!active || !payload?.length) return null
   const val = payload[0].value
-  const color = val >= 0 ? '#34d399' : '#f87171'
   return (
-    <div className="rounded-lg border border-slate-600 bg-slate-800 p-3 text-xs shadow-xl">
-      <p className="text-slate-400">{label}</p>
-      <p style={{ color }} className="font-semibold">
+    <div className="tooltip-box">
+      <p className="text-dune-muted">{label}</p>
+      <p className={`font-semibold ${val >= 0 ? 'text-dune-green' : 'text-dune-red'}`}>
         {val >= 0 ? '+' : ''}{fmtY(val)}
       </p>
     </div>
@@ -43,6 +35,7 @@ const CustomTooltip = ({
 }
 
 export default function PnlCurveChart({ data }: Props) {
+  const { t } = useI18n()
   if (data.length === 0) return null
 
   const downsampled = data.length > 500
@@ -51,47 +44,27 @@ export default function PnlCurveChart({ data }: Props) {
 
   const maxVal = Math.max(...downsampled.map(d => d.cumPnl))
   const minVal = Math.min(...downsampled.map(d => d.cumPnl))
-  const gradientId = 'pnlGradient'
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-5">
-      <h3 className="mb-1 text-sm font-semibold text-slate-300">历史 PnL 曲线</h3>
-      <p className="mb-4 text-xs text-slate-500">累计已实现盈亏（按结算时间排序）</p>
+    <div className="rounded-xl border border-dune-border bg-dune-card p-5">
+      <h3 className="mb-1 text-sm font-semibold text-dune-text">{t('chart.pnlCurve')}</h3>
+      <p className="mb-4 text-xs text-dune-muted">{t('chart.pnlCurveDesc')}</p>
       <ResponsiveContainer width="100%" height={280}>
         <AreaChart data={downsampled} margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
           <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={maxVal >= 0 ? '#34d399' : '#f87171'} stopOpacity={0.2} />
-              <stop offset="95%" stopColor={maxVal >= 0 ? '#34d399' : '#f87171'} stopOpacity={0} />
+            <linearGradient id="pnlGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={maxVal >= 0 ? '#00d395' : '#ff5c5c'} stopOpacity={0.2} />
+              <stop offset="95%" stopColor={maxVal >= 0 ? '#00d395' : '#ff5c5c'} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-          <XAxis
-            dataKey="date"
-            tick={{ fill: '#94a3b8', fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            tick={{ fill: '#94a3b8', fontSize: 11 }}
-            axisLine={false}
-            tickLine={false}
-            tickFormatter={fmtY}
-            domain={[Math.min(minVal * 1.05, 0), Math.max(maxVal * 1.05, 0)]}
-            width={60}
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2d3039" vertical={false} />
+          <XAxis dataKey="date" tick={{ fill: '#8a8f98', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+          <YAxis tick={{ fill: '#8a8f98', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={fmtY}
+            domain={[Math.min(minVal * 1.05, 0), Math.max(maxVal * 1.05, 0)]} width={60} />
           <Tooltip content={<CustomTooltip />} />
-          <ReferenceLine y={0} stroke="#475569" strokeDasharray="4 4" />
-          <Area
-            type="monotone"
-            dataKey="cumPnl"
-            stroke={maxVal >= 0 ? '#34d399' : '#f87171'}
-            strokeWidth={2}
-            fill={`url(#${gradientId})`}
-            dot={false}
-            activeDot={{ r: 4, fill: '#6366f1' }}
-          />
+          <ReferenceLine y={0} stroke="#2d3039" strokeDasharray="4 4" />
+          <Area type="monotone" dataKey="cumPnl" stroke={maxVal >= 0 ? '#00d395' : '#ff5c5c'} strokeWidth={2}
+            fill="url(#pnlGrad)" dot={false} activeDot={{ r: 4, fill: '#4c9aff' }} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

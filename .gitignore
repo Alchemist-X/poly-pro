@@ -14,6 +14,12 @@ dist/
 *.html
 !index.html
 
+# Temp analysis docs (HashDive scraping artifacts)
+hashdive-*.md
+README-hashdive-docs.md
+scroll-script.js
+
 # OS
 .DS_Store
 Thumbs.db
+.vercel

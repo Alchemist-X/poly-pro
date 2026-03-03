@@ -1,3 +1,39 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg-primary: #0d0f14;
+  --bg-card: #1a1d25;
+  --bg-card-hover: #22252e;
+  --border: #2d3039;
+  --text-primary: #e6e8eb;
+  --text-secondary: #8a8f98;
+  --green: #00d395;
+  --red: #ff5c5c;
+  --blue: #4c9aff;
+  --orange: #f5a623;
+  --purple: #b18cfe;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-feature-settings: 'tnum';
+}
+
+.card {
+  @apply rounded-xl border p-5;
+  border-color: var(--border);
+  background-color: var(--bg-card);
+}
+
+.card:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.tooltip-box {
+  border-color: var(--border);
+  background-color: var(--bg-card);
+  @apply rounded-lg border p-3 text-xs shadow-xl;
+}
