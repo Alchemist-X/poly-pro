@@ -18,8 +18,6 @@ import RoiDistribution from './components/RoiDistribution'
 import CategoryBreakdown from './components/CategoryBreakdown'
 import PriceBucketChart from './components/PriceBucketChart'
 
-const CAR_WALLET = '0x7c3db723f1d4d8cb9c550095203b686cb11e5c6b'
-
 interface TraderData {
   profile: TraderProfile
   positions: Position[]
